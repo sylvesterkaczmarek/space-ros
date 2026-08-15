@@ -193,8 +193,16 @@ sources:
   FROM +setup
 
   RUN apt-get update && apt-get install -y python3-vcstool
-  RUN mkdir src -p \
-      && vcs import --retry 3 src < output.repos \
+  RUN mkdir src -p
+
+  # Keep floating Space ROS overrides as first-class Earthly git inputs.
+  # GIT CLONE is commit-aware, so a branch-tip change invalidates this target
+  # without forcing the rest of the build through RUN --no-cache.
+  GIT CLONE --branch main https://github.com/ament/ament_ikos.git src/ament_ikos
+  GIT CLONE --branch spaceros https://github.com/ament/ament_lint.git src/ament_lint
+  GIT CLONE --branch main https://github.com/space-ros/process_sarif.git src/process_sarif
+
+  RUN vcs import --retry 3 --skip-existing src < output.repos \
       && vcs export --exact src > exact.repos
 
   # Save artifacts to be used
